@@ -1,0 +1,2 @@
+Experimenting repository to implement almost all RL-Algorithms from calssic one (Q-Learning/SARSA) to the latest one (PPO / Actor-Critic ).
+Algorithms are used to guide a drone that moves in 2D space, from point S to destination S, while trying to avoid obstacles, by giving velocity commands : Vx and Vy.
