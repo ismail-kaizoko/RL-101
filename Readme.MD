@@ -37,11 +37,7 @@ For our case, we want to train a drone policy to navigate in an environemnt with
 
 The goal is to train a **2D drone navigation policy** that moves from a start position **S** to a destination **D** while avoiding obstacles.
 
-The drone is controlled through velocity commands:
-
-\[
-(V_x, V_y)
-\]
+The drone is controlled through Acceleration commands $ (a_x, a_y) $
 
 <img src="docs/imgs/example.png"/>
 
@@ -91,17 +87,8 @@ the drone naturally falls and eventually crashes.
 
 ### Policy
 
-A **policy** determines which action to take given a state:
-
-\[
-\pi(a|s)
-\]
-
-RL aims to learn the **optimal policy**:
-
-\[
-\pi^*(a|s)
-\]
+A **policy** determines which action to take given a state $\pi(a|s)$
+RL aims to learn the **optimal policy**: $\pi^*(a|s)$
 
 that produces the safest and shortest trajectory.
 
@@ -113,12 +100,12 @@ The reward function defines the desired behavior.
 
 For this drone task:
 
-| Reward Component | Purpose | Value |
-|---|---|---:|
-| **Progress Reward** | Encourages moving toward destination | `+1` |
-| **Time Penalty** | Encourages faster arrival | `-1` |
-| **Collision Penalty** | Strongly discourages crashes | `-10` |
-| **Goal Bonus** | Reward for reaching destination | `+100` |
+| Reward Component      | Purpose                              |  Value |
+| --------------------- | ------------------------------------ | -----: |
+| **Progress Reward**   | Encourages moving toward destination |   `+1` |
+| **Time Penalty**      | Encourages faster arrival            |   `-1` |
+| **Collision Penalty** | Strongly discourages crashes         |  `-10` |
+| **Goal Bonus**        | Reward for reaching destination      | `+100` |
 
 Final reward:
 
@@ -136,11 +123,7 @@ env/reward.py
 
 ### Value Function
 
-The **value function** estimates the expected future reward from a state:
-
-\[
-V(s)
-\]
+The **value function** estimates the expected future reward from a state: $V(s)$
 
 It helps the agent evaluate whether a state is promising or dangerous.
 

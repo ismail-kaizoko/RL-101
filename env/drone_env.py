@@ -20,7 +20,7 @@ class DroneEnv2D(gym.Env):
         - obstacle_distances: distances to N nearest obstacles (or world edge)
 
     Action:
-        [dvx, dvy] — velocity command, clipped to [-1, 1]
+        [dax, day] — acceleration command, clipped to [-1, 1]
 
     This follows the gymnasium API so every RL library works out of the box.
     """
