@@ -73,6 +73,12 @@ class DroneEnv2D(gym.Env):
         self.obstacles: list       = []
         self.step_count: int       = 0
 
+        # Renderer state (cached each step for visual feedback)
+        self._last_thrust:        np.ndarray = np.zeros(2)
+        self._last_ray_distances: np.ndarray = np.ones(n_obstacle_rays, dtype=np.float32)
+        self._last_collided:      bool       = False
+        self._episode_reward:     float      = 0.0
+
         self.renderer = None   # lazy-init when render() is called
 
     # ── Gymnasium API ─────────────────────────────────────────────
@@ -82,8 +88,11 @@ class DroneEnv2D(gym.Env):
         if seed is not None:
             self.rng = np.random.default_rng(seed)
 
-        self.step_count = 0
-        self.obstacles  = generate_obstacles(self.curriculum_level, self.world_size, self.rng)
+        self.step_count       = 0
+        self._episode_reward  = 0.0
+        self._last_collided   = False
+        self._last_thrust     = np.zeros(2)
+        self.obstacles = generate_obstacles(self.curriculum_level, self.world_size, self.rng)
 
         # Place drone and goal away from obstacles and each other
         self.pos  = self._random_free_position()
@@ -98,6 +107,7 @@ class DroneEnv2D(gym.Env):
         self.step_count += 1
         action = np.clip(action, -1.0, 1.0)
         thrust = action * self.physics.max_thrust
+        self._last_thrust = thrust.copy()
 
         prev_pos = self.pos.copy()
         self.pos, self.vel = self.physics.step(self.pos, self.vel, thrust)
@@ -107,11 +117,13 @@ class DroneEnv2D(gym.Env):
 
         # Collision check
         collided = self._check_collision()
+        self._last_collided = collided
 
         # Reward
         reward, terminated = self.reward_fn.compute(
             self.pos, prev_pos, self.goal, collided
         )
+        self._episode_reward += reward
 
         # Truncation (ran out of steps — not a failure, just time limit)
         truncated = (self.step_count >= self.max_steps)
@@ -132,7 +144,14 @@ class DroneEnv2D(gym.Env):
             from .renderer import DroneRenderer
             self.renderer = DroneRenderer(self.world_size)
         return self.renderer.render(
-            self.pos, self.vel, self.goal, self.obstacles, self.render_mode
+            self.pos, self.vel, self.goal, self.obstacles, self.render_mode,
+            thrust=self._last_thrust,
+            ray_distances=self._last_ray_distances,
+            n_rays=self.n_obstacle_rays,
+            dist_to_goal=float(np.linalg.norm(self.pos - self.goal)),
+            step_count=self.step_count,
+            episode_reward=self._episode_reward,
+            collided=self._last_collided,
         )
 
     def close(self):
@@ -156,6 +175,7 @@ class DroneEnv2D(gym.Env):
 
         # Obstacle distances via ray casting
         obs_distances = self._ray_cast_obstacles()
+        self._last_ray_distances = obs_distances   # cache for renderer
 
         return np.concatenate([
             pos_norm, vel_norm, goal_delta, obs_distances
