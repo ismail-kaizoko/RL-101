@@ -34,6 +34,7 @@ class DroneEnv2D(gym.Env):
         curriculum_level: int = 0,     # 0 = empty, 3 = dense
         n_obstacle_rays: int = 8,      # how many obstacle distance sensors
         render_mode:   Optional[str] = None,
+        fps:           int   = 30,     # rendering frame rate (lower = slow motion)
         seed:          Optional[int] = None,
     ):
         super().__init__()
@@ -43,6 +44,7 @@ class DroneEnv2D(gym.Env):
         self.curriculum_level = curriculum_level
         self.n_obstacle_rays  = n_obstacle_rays
         self.render_mode      = render_mode
+        self.fps              = fps
 
         # Sub-modules
         self.physics  = DronePhysics(max_speed=5.0, drag=0.1, dt=0.1)
@@ -143,7 +145,7 @@ class DroneEnv2D(gym.Env):
             return
         if self.renderer is None:
             from .renderer import DroneRenderer
-            self.renderer = DroneRenderer(self.world_size)
+            self.renderer = DroneRenderer(self.world_size, fps=self.fps)
         return self.renderer.render(
             self.pos, self.vel, self.goal, self.obstacles, self.render_mode,
             thrust=self._last_thrust,

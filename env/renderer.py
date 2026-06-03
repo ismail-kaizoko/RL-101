@@ -8,12 +8,13 @@ class DroneRenderer:
 
     MAX_TRAIL = 30
 
-    def __init__(self, world_size: float, window_px: int = 700):
+    def __init__(self, world_size: float, window_px: int = 700, fps: int = 30):
         import pygame
         self.pygame = pygame
         self.world_size = world_size
         self.window_px = window_px
         self.scale = window_px / world_size
+        self.fps = fps
 
         pygame.init()
         self.screen = pygame.display.set_mode((window_px, window_px))
@@ -251,9 +252,11 @@ class DroneRenderer:
         self._draw_hud(dist_to_goal, speed, step_count, episode_reward)
 
         if mode == "human":
-            pygame.event.pump()   # keep OS from marking window as frozen
+            pygame.event.pump()
             pygame.display.flip()
-            self.clock.tick(30)
+            self.clock.tick(self.fps)
+            if collided:
+                pygame.time.wait(800)  # freeze frame on crash so the player can see it
             return None
         else:
             return np.transpose(
