@@ -112,11 +112,12 @@ class DroneEnv2D(gym.Env):
         prev_pos = self.pos.copy()
         self.pos, self.vel = self.physics.step(self.pos, self.vel, thrust)
 
-        # Clip to world bounds
-        self.pos = np.clip(self.pos, 0.0, self.world_size)
-
-        # Collision check
+        # Collision check on raw physics position — walls are real obstacles
         collided = self._check_collision()
+
+        # Clip so the drone stays in the renderable area even after a crash
+        self.pos[0] = float(np.clip(self.pos[0], 0.0, self.world_size))
+        self.pos[1] = min(float(self.pos[1]), self.world_size)
         self._last_collided = collided
 
         # Reward
@@ -206,8 +207,8 @@ class DroneEnv2D(gym.Env):
         for i in range(steps):
             t = (i + 1) * max_range / steps
             point = origin + direction * t
-            # World boundary hit
-            if np.any(point < 0) or np.any(point > self.world_size):
+            # Wall hit: left, right, bottom — top is open sky
+            if point[0] < 0 or point[0] > self.world_size or point[1] > self.world_size:
                 return t
             # Obstacle hit
             for obs in self.obstacles:
@@ -216,8 +217,11 @@ class DroneEnv2D(gym.Env):
         return max_range
 
     def _check_collision(self) -> bool:
-        """Returns True if drone is inside any obstacle or out of bounds."""
-        if np.any(self.pos < 0) or np.any(self.pos > self.world_size):
+        """Returns True if drone is inside any obstacle or hits a wall.
+        Top boundary (y < 0) is open sky — the drone can fly above it freely.
+        """
+        x, y = self.pos
+        if x < 0 or x > self.world_size or y > self.world_size:
             return True
         for obs in self.obstacles:
             if obs.contains(self.pos):

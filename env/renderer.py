@@ -69,6 +69,32 @@ class DroneRenderer:
         for y in range(0, self.window_px + 1, step):
             self.pygame.draw.line(self.screen, self.C_GRID, (0, y), (self.window_px, y))
 
+    def _draw_walls(self):
+        """Solid walls on left, bottom, right edges. Top is open sky."""
+        w = self.window_px
+        T = 10  # thickness in pixels
+        fill = (50, 44, 68)
+        lit  = (95, 86, 124)
+        shd  = (24, 21, 35)
+
+        # Bottom wall
+        self.pygame.draw.rect(self.screen, fill, (0, w - T, w, T))
+        self.pygame.draw.line(self.screen, lit, (0, w - T), (w, w - T), 2)
+        self.pygame.draw.line(self.screen, shd, (0, w - 1), (w, w - 1), 1)
+
+        # Left wall
+        self.pygame.draw.rect(self.screen, fill, (0, 0, T, w))
+        self.pygame.draw.line(self.screen, lit, (T - 1, 0), (T - 1, w), 2)
+        self.pygame.draw.line(self.screen, shd, (0, 0), (0, w), 1)
+
+        # Right wall
+        self.pygame.draw.rect(self.screen, fill, (w - T, 0, T, w))
+        self.pygame.draw.line(self.screen, lit, (w - T, 0), (w - T, w), 2)
+        self.pygame.draw.line(self.screen, shd, (w - 1, 0), (w - 1, w), 1)
+
+        # Sky hint: subtle blue strip at top edge
+        self.pygame.draw.rect(self.screen, (16, 28, 52), (T, 0, w - 2 * T, 4))
+
     def _draw_obstacles(self, obstacles):
         for obs in obstacles:
             rx = int(obs.x * self.scale)
@@ -208,6 +234,7 @@ class DroneRenderer:
 
         self.screen.fill(self.C_BG)
         self._draw_grid()
+        self._draw_walls()
 
         if ray_distances is not None:
             self._draw_rays(pos, ray_distances, n_rays)
