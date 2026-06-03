@@ -66,26 +66,16 @@ In this project, the objective is to train a drone that:
 
 ### Drone Dynamics
 
-The drone receives velocity commands:
-
-\[
-(V_x, V_y)
-\]
+The drone receives velocity commands: $(\mathcal{a}_x, \mathcal{a}_y)$
 
 The environment simulates **gravity along the y-axis**.  
-If:
-
-\[
-V_y = 0
-\]
-
-the drone naturally falls and eventually crashes.
+If: $\mathcal{a}_y = 0$. the drone naturally falls and eventually crashes.
 
 ---
 
-# RL Vocabulary (Using This Example)
+# RL Vocabulary (Using this Drone)
 
-### Policy
+### I. Policy
 
 A **policy** determines which action to take given a state $\pi(a|s)$
 RL aims to learn the **optimal policy**: $\pi^*(a|s)$
@@ -94,7 +84,7 @@ that produces the safest and shortest trajectory.
 
 ---
 
-### Reward Function
+### II. Reward Function
 
 The reward function defines the desired behavior.
 
@@ -121,7 +111,7 @@ env/reward.py
 
 ---
 
-### Value Function
+### III. Value Function
 
 The **value function** estimates the expected future reward from a state: $V(s)$
 
@@ -129,7 +119,7 @@ It helps the agent evaluate whether a state is promising or dangerous.
 
 ---
 
-### Horizon
+### IV. Horizon
 
 The **horizon** defines how far into the future the agent considers rewards.
 
