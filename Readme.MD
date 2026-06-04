@@ -71,6 +71,13 @@ The drone receives velocity commands: $(\mathcal{a}_x, \mathcal{a}_y)$
 The environment simulates **gravity along the y-axis**.  
 If: $\mathcal{a}_y = 0$. the drone naturally falls and eventually crashes.
 
+
+### Covered Topics : 
+- **Classic RL** : dynamic_programming / Q-learning / TD-learning / Monte-Carlo.
+  - these algorithms run on a finite set of state and actions, a discretiation of the drone environement is required and done with the script : `env/discrete_wrapper.py`
+- **Deep RL** (coming)
+- **Policy Gradient** (coming)
+
 ---
 
 # RL Vocabulary (Using this Drone)
@@ -103,11 +110,7 @@ Final reward:
 r = progress - timePenalty - collisionPenalty + goalBonus
 \]
 
-Reward tuning can be modified in:
-
-```bash
-env/reward.py
-```
+*Reward tuning can be modified in*: `env/reward.py`
 
 ---
 
