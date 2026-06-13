@@ -57,6 +57,7 @@ In RL, an **Agent** interacts with an **Environment**:
 - The Agent learns a policy that maximizes long-term reward
 
 In this project, the objective is to train the **command system** of a **drone** in order to :
+
 - Reaches the destination safely
 - Avoids obstacles
 - Minimizes travel time
@@ -72,8 +73,8 @@ The drone receives velocity commands: $(\mathcal{a}_x, \mathcal{a}_y)$
 The environment simulates **gravity along the y-axis**.  
 If: $\mathcal{a}_y = 0$. the drone naturally falls and eventually crashes.
 
+### Covered Topics :
 
-### Covered Topics : 
 - **Classic RL** : dynamic_programming / Q-learning / TD-learning / Monte-Carlo.
   - these algorithms run on a finite set of state and actions, a discretiation of the drone environement is required and done with the script : `env/discrete_wrapper.py`
 - **Deep RL** (coming)
@@ -111,34 +112,33 @@ Final reward:
 r = progress - timePenalty - collisionPenalty + goalBonus
 \]
 
-*Reward tuning can be modified in*: `env/reward.py`
+_Reward tuning can be modified in_: `env/reward.py`
 
 ---
 
-### III. Gain : Objective function 
+### III. Gain : Objective function
 
 Given the rewards $r_0, r_1, r_2...$, the **Gain** is refered as $G = r_0 + \gamma*r1 + \gamma^2*r_2 + ....$
 
-the parameter $\gamma \in [0,1] $ is the discount factor. 
+the parameter $\gamma \in [0,1] $ is the discount factor.
 
-In the RL realm, this is the **Objective Function** that every policy tires to **maximize**, this allows to introduce  sence of comparaison between policies : $\pi_1 > \pi_2 \Rightarrow \mathbb{E}_{\pi_1}(G) > \mathbb{E}_{\pi_2}(G) $
+In the RL realm, this is the **Objective Function** that every policy tires to **maximize**, this allows to introduce sence of comparaison between policies : $\pi*1 > \pi_2 \Rightarrow \mathbb{E}*{\pi*1}(G) > \mathbb{E}*{\pi_2}(G) $
 
-> *Note*
+> _Note_
+>
 > - I remind that usually a policy is stochastic, meaning that for many episodes using the same policy, we can get multiple sequences of states, each with his own Gain. We report then the Mean of the Gains, hence the Expectation symbol.
-> - This is one drawback of RL-Algorithms, that they are *Ustable*, or more mathematicallly they suffer from high Variance. in this scope, Reaserchers In papers report the Gain of a policy coming with its variance : G = $\mu \pm \sigma $. that is usually reported in papers and research tries to combat, to give the reader a better understading, giving him the choice of the trad-off : Less Gain but Stable/ More Gain but unstable, depending on his use-case.
-
+> - This is one drawback of RL-Algorithms, that they are _Ustable_, or more mathematicallly they suffer from high Variance. in this scope, Reaserchers In papers report the Gain of a policy coming with its variance : G = $\mu \pm \sigma $. that is usually reported in papers and research tries to combat, to give the reader a better understading, giving him the choice of the trad-off : Less Gain but Stable/ More Gain but unstable, depending on his use-case.
 
 ---
 
 ### III. Value Function
 
-The **value function** of a *policy* estimates the expected future Gain from a state $s$ : $V_\pi(s) = \mathbb{E}(G|s_0 = s) $
+The **value function** of a _policy_ estimates the expected future Gain from a state $s$ : $V\_\pi(s) = \mathbb{E}(G|s_0 = s) $
 It helps the agent evaluate whether a state is promising or dangerous.
 
-> *Notes* :
-> - I used the Expectation since the policy is not deterministic. in the latter case, the expectation is removed
-> - How is it computed : we start simulation from state $s$, the agent runs many episodes, chosing sequences of actions using the policy $\pi$ and calculating the obtained Gain every time, then output the mean. in the determinstic case, we run only one episode, and return the Gain.
-
+> _Notes_ :
+>
+> - I used the Expectation since the policy is not deterministic (or the environement that gives the reswards). in the latter case, the expectation is removed
 
 ---
 
