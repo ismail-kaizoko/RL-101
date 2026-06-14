@@ -1,0 +1,89 @@
+# env/discrete_wrapper.py
+"""
+Wraps DroneEnv2D into a fully discrete (s, a) space for tabular classical RL.
+
+State  : (x, y) position binned onto a grid_size × grid_size grid
+Action : 8 compass directions + hover  (9 discrete actions)
+
+Why only (x, y)?
+  A full discretisation of all 14 state dims at even 10 bins/dim gives 10^14
+  states — impossible to tabulate. This deliberate simplification is the
+  teaching moment that motivates deep RL in Phase 2.
+
+Action map:
+    7  0  1
+    6  8  2     (8 = hover: zero thrust)
+    5  4  3
+"""
+
+import numpy as np
+import gymnasium as gym
+from gymnasium import spaces
+
+
+class DiscreteWrapper(gym.Wrapper):
+
+    ACTION_VECTORS = np.array([
+        [ 0, -1],  # 0 up
+        [ 1, -1],  # 1 up-right
+        [ 1,  0],  # 2 right
+        [ 1,  1],  # 3 down-right
+        [ 0,  1],  # 4 down
+        [-1,  1],  # 5 down-left
+        [-1,  0],  # 6 left
+        [-1, -1],  # 7 up-left
+        [ 0,  0],  # 8 hover
+    ], dtype=np.float32)
+
+    ACTION_NAMES = [
+        "up", "up-right", "right", "down-right",
+        "down", "down-left", "left", "up-left", "hover",
+    ]
+
+    def __init__(self, env: gym.Env, grid_size: int = 20):
+        super().__init__(env)
+        self.grid_size  = grid_size
+        self.world_size = env.unwrapped.world_size
+        self.n_states   = grid_size * grid_size
+        self.n_actions  = len(self.ACTION_VECTORS)
+
+        self.observation_space = spaces.Discrete(self.n_states)
+        self.action_space      = spaces.Discrete(self.n_actions)
+
+    # ── Discretisation ─────────────────────────────────────────────────────────
+
+    def pos_to_state(self, pos: np.ndarray) -> int:
+        bx = int(np.clip(pos[0] / self.world_size * self.grid_size, 0, self.grid_size - 1))
+        by = int(np.clip(pos[1] / self.world_size * self.grid_size, 0, self.grid_size - 1))
+        return by * self.grid_size + bx
+
+    def state_to_pos(self, state: int) -> np.ndarray:
+        """Centre of the grid cell in world coordinates."""
+        by, bx  = divmod(state, self.grid_size)
+        cell    = self.world_size / self.grid_size
+        return np.array([(bx + 0.5) * cell, (by + 0.5) * cell])
+
+    def _action_to_thrust(self, action: int) -> np.ndarray:
+        vec  = self.ACTION_VECTORS[action].copy()
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            vec /= norm
+        return vec * self.env.unwrapped.physics.max_thrust
+
+    def _discrete_state(self) -> int:
+        return self.pos_to_state(self.env.unwrapped.pos)
+
+    def goal_state(self) -> int:
+        return self.pos_to_state(self.env.unwrapped.goal)
+
+    # ── Gymnasium API ──────────────────────────────────────────────────────────
+
+    def reset(self, **kwargs):
+        _, info = self.env.reset(**kwargs)
+        return self._discrete_state(), info
+
+    def step(self, action: int):
+        thrust   = self._action_to_thrust(action)
+        norm_act = thrust / self.env.unwrapped.physics.max_thrust
+        _, reward, terminated, truncated, info = self.env.step(norm_act)
+        return self._discrete_state(), reward, terminated, truncated, info
