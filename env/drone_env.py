@@ -31,7 +31,7 @@ class DroneEnv2D(gym.Env):
         self,
         world_size:    float = 20.0,   # world is a square [0, world_size]^2
         max_steps:     int   = 500,    # episode truncation
-        curriculum_level: int = 0,     # 0 = empty, 3 = dense
+        level: int = 0,     # 0 = empty, 3 = dense
         n_obstacle_rays: int = 8,      # how many obstacle distance sensors
         render_mode:   Optional[str] = None,
         fps:           int   = 30,     # rendering frame rate (lower = slow motion)
@@ -41,7 +41,7 @@ class DroneEnv2D(gym.Env):
 
         self.world_size       = world_size
         self.max_steps        = max_steps
-        self.curriculum_level = curriculum_level
+        self.level = level
         self.n_obstacle_rays  = n_obstacle_rays
         self.render_mode      = render_mode
         self.fps              = fps
@@ -94,7 +94,7 @@ class DroneEnv2D(gym.Env):
         self._episode_reward  = 0.0
         self._last_collided   = False
         self._last_thrust     = np.zeros(2)
-        self.obstacles = generate_obstacles(self.curriculum_level, self.world_size, self.rng)
+        self.obstacles = generate_obstacles(self.level, self.world_size, self.rng)
 
         # Place drone and goal away from obstacles and each other
         self.pos  = self._random_free_position()
