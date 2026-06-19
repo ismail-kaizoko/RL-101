@@ -23,22 +23,17 @@ from gymnasium import spaces
 
 class DiscreteWrapper(gym.Wrapper):
 
-    ACTION_VECTORS = np.array([
-        [ 0, -1],  # 0 up
-        [ 1, -1],  # 1 up-right
-        [ 1,  0],  # 2 right
-        [ 1,  1],  # 3 down-right
-        [ 0,  1],  # 4 down
-        [-1,  1],  # 5 down-left
-        [-1,  0],  # 6 left
-        [-1, -1],  # 7 up-left
-        [ 0,  0],  # 8 hover
-    ], dtype=np.float32)
+    G = 9.8   # must match DronePhysics.gravity
 
-    ACTION_NAMES = [
-        "up", "up-right", "right", "down-right",
-        "down", "down-left", "left", "up-left", "hover",
-    ]
+    AX_VALUES = [-2*G, -G,  0.0,  G, 2*G]   # left thrust / coast / right thrust
+    AY_VALUES = [-2*G, -G,  0.0,  G, 2*G]    # dive  /  fall / hover  /  climb
+
+    # Build all 9 combinations
+    ACTION_TABLE = np.array([
+        [ax, ay]
+        for ay in AY_VALUES
+        for ax in AX_VALUES
+    ], dtype=np.float32)   # shape (9, 2)
 
     def __init__(self, env: gym.Env, grid_size: int = 20):
         super().__init__(env)
@@ -64,11 +59,7 @@ class DiscreteWrapper(gym.Wrapper):
         return np.array([(bx + 0.5) * cell, (by + 0.5) * cell])
 
     def _action_to_thrust(self, action: int) -> np.ndarray:
-        vec  = self.ACTION_VECTORS[action].copy()
-        norm = np.linalg.norm(vec)
-        if norm > 0:
-            vec /= norm
-        return vec * self.env.unwrapped.physics.max_thrust
+        return self.ACTION_TABLE[action]
 
     def _discrete_state(self) -> int:
         return self.pos_to_state(self.env.unwrapped.pos)
@@ -85,5 +76,11 @@ class DiscreteWrapper(gym.Wrapper):
     def step(self, action: int):
         thrust   = self._action_to_thrust(action)
         norm_act = thrust / self.env.unwrapped.physics.max_thrust
+        _, reward, terminated, truncated, info = self.env.step(norm_act)
+        return self._discrete_state(), reward, terminated, truncated, info
+    
+    def step(self, action: int):
+        thrust   = self._action_to_thrust(action)     # [ax, ay] in m/s²
+        norm_act = thrust / self.env.unwrapped.physics.max_thrust   # normalize to [-1,1] for DroneEnv2D.step()
         _, reward, terminated, truncated, info = self.env.step(norm_act)
         return self._discrete_state(), reward, terminated, truncated, info
