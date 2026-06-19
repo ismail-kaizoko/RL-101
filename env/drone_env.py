@@ -3,7 +3,7 @@ import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 from .physics   import DronePhysics
-from .obstacles import generate_obstacles, Rect
+from .obstacles import generate_obstacles, Rect, LEVEL_OBSTACLES
 from .reward    import RewardFunction
 from typing import Optional
 
@@ -41,7 +41,7 @@ class DroneEnv2D(gym.Env):
 
         self.world_size       = world_size
         self.max_steps        = max_steps
-        self.level = level
+        self.level            = level
         self.n_obstacle_rays  = n_obstacle_rays
         self.render_mode      = render_mode
         self.fps              = fps
@@ -94,11 +94,26 @@ class DroneEnv2D(gym.Env):
         self._episode_reward  = 0.0
         self._last_collided   = False
         self._last_thrust     = np.zeros(2)
-        self.obstacles = generate_obstacles(self.level, self.world_size, self.rng)
 
+        # hardcoded start / goal
+        self.fixed_start = np.array([1.0,  19.0])   # bottom-left
+        self.fixed_goal  = np.array([19.0,  1.0])   # top-right
+
+
+        # self.obstacles = generate_obstacles(self.level, self.world_size, self.rng)
+        self.obstacles = self.obstacles = [
+            Rect(o.x, o.y, o.w, o.h)
+            for o in LEVEL_OBSTACLES[self.level]
+            ]
+        
         # Place drone and goal away from obstacles and each other
-        self.pos  = self._random_free_position()
-        self.goal = self._random_free_position(min_dist_from=self.pos, min_dist=5.0)
+        # self.pos  = self._random_free_position()
+        # self.goal = self._random_free_position(min_dist_from=self.pos, min_dist=5.0)
+
+        # hardcoded start/end
+        self.pos  = self.fixed_start.copy()
+        self.goal = self.fixed_goal.copy()
+
         self.vel  = np.zeros(2)
 
         obs  = self._get_obs()
