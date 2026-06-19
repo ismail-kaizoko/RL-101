@@ -23,24 +23,36 @@ from gymnasium import spaces
 
 class DiscreteWrapper(gym.Wrapper):
 
-    G = 9.8   # must match DronePhysics.gravity
+    G = 9.8
 
-    AX_VALUES = [-2*G, -G,  0.0,  G, 2*G]   # left thrust / coast / right thrust
-    AY_VALUES = [-2*G, -G,  0.0,  G, 2*G]    # dive  /  fall / hover  /  climb
+    AX_VALUES = np.array(
+        [-2*G, -G, 0.0, G, 2*G],
+        dtype=np.float32
+    )
 
-    # Build all 9 combinations
-    ACTION_TABLE = np.array([
-        [ax, ay]
-        for ay in AY_VALUES
-        for ax in AX_VALUES
-    ], dtype=np.float32)   # shape (9, 2)
+    AY_VALUES = np.array(
+        [-2*G, -G, 0.0, G, 2*G],
+        dtype=np.float32
+    )
+
 
     def __init__(self, env: gym.Env, grid_size: int = 20):
         super().__init__(env)
         self.grid_size  = grid_size
         self.world_size = env.unwrapped.world_size
+        # 25 discrete velocity actions
+        self.action_table = np.array(
+            [
+                [ax, ay]
+                for ay in self.AY_VALUES
+                for ax in self.AX_VALUES
+            ],
+            dtype=np.float32
+        )
+
+        self.n_actions  = len(self.action_table)
         self.n_states   = grid_size * grid_size
-        self.n_actions  = len(self.ACTION_VECTORS)
+
 
         self.observation_space = spaces.Discrete(self.n_states)
         self.action_space      = spaces.Discrete(self.n_actions)
@@ -59,7 +71,7 @@ class DiscreteWrapper(gym.Wrapper):
         return np.array([(bx + 0.5) * cell, (by + 0.5) * cell])
 
     def _action_to_thrust(self, action: int) -> np.ndarray:
-        return self.ACTION_TABLE[action]
+        return self.action_table[action]
 
     def _discrete_state(self) -> int:
         return self.pos_to_state(self.env.unwrapped.pos)

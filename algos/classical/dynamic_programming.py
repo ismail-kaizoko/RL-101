@@ -58,7 +58,8 @@ def policy_evaluation(
         V(s) ← Σ_a π(a|s) [ R(s,a) + γ Σ_s' P(s,a,s') V(s') ]
     """
     V = np.zeros(P.shape[0])
-    for i in range(10_000):
+    for i in range(100):
+        
         delta = 0.0
         for s in range(P.shape[0]):
             v     = V[s]
