@@ -122,7 +122,7 @@ Given the rewards $r_0, r_1, r_2...$, the **Gain** is refered as $G = r_0 + \gam
 
 the parameter $\gamma \in [0,1] $ is the discount factor.
 
-In the RL realm, this is the **Objective Function** that every policy tires to **maximize**, this allows to introduce sence of comparaison between policies : $\pi*1 > \pi_2 \Rightarrow \mathbb{E}*{\pi*1}(G) > \mathbb{E}*{\pi_2}(G) $
+In the RL realm, this is the **Objective Function** that every policy tires to **maximize**, this allows to introduce sence of comparaison between policies : $\pi_1 > \pi_2 \Leftrightarrow \mathbb{E}_{\pi_1}(G) > \mathbb{E}_{\pi_2}(G) $
 
 > _Note_
 >
@@ -133,7 +133,7 @@ In the RL realm, this is the **Objective Function** that every policy tires to *
 
 ### III. Value Function
 
-The **value function** of a _policy_ estimates the expected future Gain from a state $s$ : $V\_\pi(s) = \mathbb{E}(G|s_0 = s) $
+The **value function** of a _policy_ estimates the expected future Gain from a state $s$ : $V_\pi(s) = \mathbb{E}(G|s_0 = s) $
 It helps the agent evaluate whether a state is promising or dangerous.
 
 > _Notes_ :
