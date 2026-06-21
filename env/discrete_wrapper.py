@@ -85,14 +85,25 @@ class DiscreteWrapper(gym.Wrapper):
         _, info = self.env.reset(**kwargs)
         return self._discrete_state(), info
 
+    # def step(self, action: int):
+    #     thrust   = self._action_to_thrust(action)
+    #     norm_act = thrust / self.env.unwrapped.physics.max_thrust
+    #     _, reward, terminated, truncated, info = self.env.step(norm_act)
+    #     return self._discrete_state(), reward, terminated, truncated, info
+
     def step(self, action: int):
-        thrust   = self._action_to_thrust(action)
-        norm_act = thrust / self.env.unwrapped.physics.max_thrust
-        _, reward, terminated, truncated, info = self.env.step(norm_act)
-        return self._discrete_state(), reward, terminated, truncated, info
-    
-    def step(self, action: int):
-        thrust   = self._action_to_thrust(action)     # [ax, ay] in m/s²
-        norm_act = thrust / self.env.unwrapped.physics.max_thrust   # normalize to [-1,1] for DroneEnv2D.step()
-        _, reward, terminated, truncated, info = self.env.step(norm_act)
+        thrust = self._action_to_thrust(action)   # real m/s², e.g. [−4.9, 9.8, 19.6]
+
+        # bypass DroneEnv2D.step() normalisation — call physics directly
+        raw = self.env.unwrapped
+        prev_pos       = raw.pos.copy()
+        raw.pos, raw.vel = raw.physics.step(raw.pos, raw.vel, thrust)
+        raw.pos        = np.clip(raw.pos, 0.0, raw.world_size)
+        collided       = raw._collides(raw.pos)
+        reward, terminated = raw.reward_fn.compute(raw.pos, prev_pos, raw.goal, collided)
+        raw.step_count += 1
+        truncated      = raw.step_count >= raw.max_steps
+        info           = {"dist_to_goal": float(np.linalg.norm(raw.pos - raw.goal)),
+                        "collided": collided, "step": raw.step_count}
+
         return self._discrete_state(), reward, terminated, truncated, info

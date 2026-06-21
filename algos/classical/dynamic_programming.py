@@ -119,7 +119,7 @@ def policy_iteration(
 
 def value_iteration(
     P: np.ndarray, R: np.ndarray, gamma: float = 0.99,
-    theta: float = 1e-4, max_iter: int = 1000,
+    theta: float = 1e-4, max_iter: int = 5000,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Bellman optimality update, repeated until convergence:
