@@ -17,8 +17,8 @@ class RewardFunction:
     def __init__(
         self,
         goal_radius:      float = 1.0,    # how close = "reached"
-        collision_penalty: float = -10.0,  # large negative for hitting walls
-        time_penalty:      float = -0.01,  # small nudge to be fast
+        collision_penalty: float = -100.0,  # large negative for hitting walls
+        time_penalty:      float = -0.1,  # small nudge to be fast
         goal_bonus:        float = 100.0,  # big reward for arriving
         progress_scale:    float = 1.0,    # weight for distance progress
     ):

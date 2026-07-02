@@ -19,29 +19,78 @@ from tqdm import tqdm
 
 # ── Model builder ──────────────────────────────────────────────────────────────
 
-def build_model(env, n_samples: int = 5) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Approximate P(s'|s,a) and R(s,a) by sampling the env.
+# def build_model(env, n_samples: int = 5) -> Tuple[np.ndarray, np.ndarray]:
+#     """
+#     Approximate P(s'|s,a) and R(s,a) by sampling the env.
 
-    P : (n_states, n_actions, n_states)  transition probabilities
-    R : (n_states, n_actions)            expected immediate reward
+#     P : (n_states, n_actions, n_states)  transition probabilities
+#     R : (n_states, n_actions)            expected immediate reward
+#     """
+#     n_s, n_a = env.n_states, env.n_actions
+#     P = np.zeros((n_s, n_a, n_s), dtype=np.float32)
+#     R = np.zeros((n_s, n_a),      dtype=np.float32)
+#     T = np.zeros(env.n_states, dtype=bool)
+
+#     print("Building environment model...")
+#     for s in tqdm(range(n_s), desc="States"):
+#         for a in range(n_a):
+#             for _ in range(n_samples):
+#                 env.env.reset()
+#                 env.env.unwrapped.pos = env.state_to_pos(s).copy()
+#                 env.env.unwrapped.vel = np.zeros(2)
+#                 s2, r, term, trunc, _ = env.step(a)
+#                 P[s, a, s2] += 1.0 / n_samples
+#                 R[s, a]     += r   / n_samples
+#     return P, R
+
+
+def build_model(env):
     """
+    Returns P (n_s, n_a, n_s), R (n_s, n_a), terminal (n_s,)
+
+    terminal[s] = True if state s is inside an obstacle or out of bounds.
+    These states get V=0 enforced during value iteration — they are absorbing
+    dead states with no future value.
+    Neighbours are NOT marked terminal — their danger is learned via Bellman.
+    """
+    env.env.reset()
     n_s, n_a = env.n_states, env.n_actions
-    P = np.zeros((n_s, n_a, n_s), dtype=np.float32)
-    R = np.zeros((n_s, n_a),      dtype=np.float32)
+    P        = np.zeros((n_s, n_a, n_s), dtype=np.float32)
+    R        = np.zeros((n_s, n_a),      dtype=np.float32)
 
-    print("Building environment model...")
-    for s in tqdm(range(n_s), desc="States"):
+    # Build terminal mask — only states physically inside obstacles/bounds
+    terminal = np.zeros(n_s, dtype=bool)
+
+    raw = env.env.unwrapped
+    for s in range(n_s):
+        pos = env.state_to_pos(s)
+        raw.pos = pos.copy()
+        if raw._check_collision():
+            print("yes")          # now reads the right pos
+            terminal[s] = True
+
+    print(f"Terminal states: {terminal.sum()} / {n_s}")
+
+    print("Building model...")
+    for s in tqdm(range(n_s)):
+        if terminal[s]:
+            # Dead state — self-loop with zero reward, V will be pinned to 0
+            P[s, :, s] = 1.0
+            R[s, :]    = 0.0
+            continue
+
         for a in range(n_a):
-            for _ in range(n_samples):
-                env.env.reset()
-                env.env.unwrapped.pos = env.state_to_pos(s).copy()
-                env.env.unwrapped.vel = np.zeros(2)
-                s2, r, term, trunc, _ = env.step(a)
-                s2 = s if (term or trunc) else s2
-                P[s, a, s2] += 1.0 / n_samples
-                R[s, a]     += r   / n_samples
-    return P, R
+            env.env.unwrapped.pos = env.state_to_pos(s).copy()
+            env.env.unwrapped.vel = np.zeros(2)
+
+            s2, r, term, trunc, _ = env.step(a)
+            # Record actual s2 — no remapping
+            # If terminal, s2 may be the collision cell itself (which has V=0)
+            P[s, a, s2] += 1.0  
+            R[s, a]     += r    
+
+    return P, R, terminal
+
 
 
 # ── Policy evaluation ──────────────────────────────────────────────────────────
@@ -118,7 +167,7 @@ def policy_iteration(
 # ── Value iteration ────────────────────────────────────────────────────────────
 
 def value_iteration(
-    P: np.ndarray, R: np.ndarray, gamma: float = 0.99,
+    P: np.ndarray, R: np.ndarray, terminal,  gamma: float = 0.99,
     theta: float = 1e-4, max_iter: int = 5000,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
@@ -135,6 +184,7 @@ def value_iteration(
     for i in range(max_iter):
         Q     = R + gamma * (P @ V)     # (n_s, n_a) — vectorised Bellman
         V_new = np.max(Q, axis=1)
+        V_new[terminal] = 0.0
         delta = np.max(np.abs(V_new - V))
         V     = V_new
         if i % 50 == 0:
@@ -145,4 +195,5 @@ def value_iteration(
 
     policy = np.zeros((n_s, n_a))
     policy[np.arange(n_s), np.argmax(R + gamma * (P @ V), axis=1)] = 1.0
+    policy[terminal] = 1.0 / P.shape[1]
     return policy, V
