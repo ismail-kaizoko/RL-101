@@ -20,7 +20,7 @@ class DronePhysics:
         max_thrust: float = 20.0,  # max acceleration the drone can apply (m/s²)
         gravity:    float = 9.8,   # downward acceleration (m/s²)
         drag:       float = 0.05,  # air resistance coefficient (0 = vacuum)
-        max_speed:  float = 10.0,  # velocity clamp (m/s)
+        max_speed:  float = 30.0,  # velocity clamp (m/s)
         dt:         float = 0.05,  # timestep (seconds) — smaller = more accurate
     ):
         self.max_thrust = max_thrust

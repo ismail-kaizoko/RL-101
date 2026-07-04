@@ -98,8 +98,9 @@ class DiscreteWrapper(gym.Wrapper):
         raw = self.env.unwrapped
         prev_pos       = raw.pos.copy()
         raw.pos, raw.vel = raw.physics.step(raw.pos, raw.vel, thrust)
-        raw.pos        = np.clip(raw.pos, 0.0, raw.world_size)
         collided       = raw._check_collision()
+
+        raw.pos        = np.clip(raw.pos, 0.0, raw.world_size)
         reward, terminated = raw.reward_fn.compute(raw.pos, prev_pos, raw.goal, collided)
         raw.step_count += 1
         truncated      = raw.step_count >= raw.max_steps
