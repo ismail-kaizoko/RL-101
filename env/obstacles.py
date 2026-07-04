@@ -46,3 +46,23 @@ def generate_obstacles(level: int, world_size: float, rng: np.random.Generator) 
         obstacles.append(Rect(x, y, w, h))
 
     return obstacles
+
+LEVEL_OBSTACLES = {
+    0: [],   # empty world
+
+    1: [
+        Rect(x=5.0,  y=5.0,  w=3.0, h=3.0),
+        Rect(x=12.0, y=8.0,  w=4.0, h=2.0),
+        Rect(x=8.0,  y=14.0, w=3.0, h=3.0),
+    ],
+
+    2: [
+        Rect(x=3.0,  y=4.0,  w=3.0, h=2.0),
+        Rect(x=10.0, y=3.0,  w=2.0, h=4.0),
+        Rect(x=6.0,  y=9.0,  w=4.0, h=2.0),
+        Rect(x=14.0, y=7.0,  w=3.0, h=3.0),
+        Rect(x=4.0,  y=14.0, w=2.0, h=4.0),
+        Rect(x=12.0, y=14.0, w=4.0, h=2.0),
+    ],
+
+}

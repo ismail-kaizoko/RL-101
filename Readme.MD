@@ -56,13 +56,15 @@ In RL, an **Agent** interacts with an **Environment**:
 - The **Environment** returns rewards or penalties
 - The Agent learns a policy that maximizes long-term reward
 
-In this project, the objective is to train a drone that:
+In this project, the objective is to train the **command system** of a **drone** in order to :
 
 - Reaches the destination safely
 - Avoids obstacles
 - Minimizes travel time
 
 <img src="docs/imgs/env.png"/>
+
+> what happens in each step : At time $t=0,1,2.... N$. the agent in **state** $s_t$ takes **action** $a_t$ and receives **reward** $r_t$, then moves to **state** $s_{t+1}$.
 
 ### Drone Dynamics
 
@@ -71,16 +73,23 @@ The drone receives velocity commands: $(\mathcal{a}_x, \mathcal{a}_y)$
 The environment simulates **gravity along the y-axis**.  
 If: $\mathcal{a}_y = 0$. the drone naturally falls and eventually crashes.
 
+### Covered Topics :
+
+- **Classic RL** : dynamic_programming / Q-learning / TD-learning / Monte-Carlo.
+  - these algorithms run on a finite set of state and actions, a discretiation of the drone environement is required and done with the script : `env/discrete_wrapper.py`
+- **Deep RL** (coming)
+- **Policy Gradient** (coming)
+
 ---
 
-# RL Vocabulary (Using this Drone)
+# RL Vocabulary (Using Drone Scenario)
 
 ### I. Policy
 
-A **policy** determines which action to take given a state $\pi(a|s)$
-RL aims to learn the **optimal policy**: $\pi^*(a|s)$
+A **policy** determines which action $a$ to take given a state $s$, modeled by the function $\pi(a|s)$
+RL aims to find the **optimal policy**: $\pi^*(a|s)$ that produces the safest and shortest trajectory.
 
-that produces the safest and shortest trajectory.
+In general, this function is stochastic, meaning it gives a distribution over the set of all actions \matchal{A}, when the drone is at state $s_t = s$ : $\pi(a|s) = \mathbb{P}(a_t = a| s_t = s) $
 
 ---
 
@@ -103,19 +112,33 @@ Final reward:
 r = progress - timePenalty - collisionPenalty + goalBonus
 \]
 
-Reward tuning can be modified in:
+_Reward tuning can be modified in_: `env/reward.py`
 
-```bash
-env/reward.py
-```
+---
+
+### III. Gain : Objective function
+
+Given the rewards $r_0, r_1, r_2...$, the **Gain** is refered as $G = r_0 + \gamma*r1 + \gamma^2*r_2 + ....$
+
+the parameter $\gamma \in [0,1] $ is the discount factor.
+
+In the RL realm, this is the **Objective Function** that every policy tires to **maximize**, this allows to introduce sence of comparaison between policies : $\pi_1 > \pi_2 \Leftrightarrow \mathbb{E}_{\pi_1}(G) > \mathbb{E}_{\pi_2}(G) $
+
+> _Note_
+>
+> - I remind that usually a policy is stochastic, meaning that for many episodes using the same policy, we can get multiple sequences of states, each with his own Gain. We report then the Mean of the Gains, hence the Expectation symbol.
+> - This is one drawback of RL-Algorithms, that they are _Ustable_, or more mathematicallly they suffer from high Variance. in this scope, Reaserchers In papers report the Gain of a policy coming with its variance : G = $\mu \pm \sigma $. that is usually reported in papers and research tries to combat, to give the reader a better understading, giving him the choice of the trad-off : Less Gain but Stable/ More Gain but unstable, depending on his use-case.
 
 ---
 
 ### III. Value Function
 
-The **value function** estimates the expected future reward from a state: $V(s)$
-
+The **value function** of a _policy_ estimates the expected future Gain from a state $s$ : $V_\pi(s) = \mathbb{E}(G|s_0 = s) $
 It helps the agent evaluate whether a state is promising or dangerous.
+
+> _Notes_ :
+>
+> - I used the Expectation since the policy is not deterministic (or the environement that gives the reswards). in the latter case, the expectation is removed
 
 ---
 

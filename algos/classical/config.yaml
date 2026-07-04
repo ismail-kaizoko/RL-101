@@ -1,0 +1,25 @@
+classical:
+  n_episodes: 3000
+  gamma: 0.99
+  epsilon_start: 1.0
+  epsilon_min: 0.05
+  epsilon_decay: 0.998
+
+  q_learning:
+    alpha: 0.1
+
+  sarsa:
+    alpha: 0.1
+
+  monte_carlo:
+    alpha: 0.05
+    first_visit: true
+
+  tile_coding:
+    alpha: 0.1
+    n_tilings: 8
+    n_tiles: 10
+
+  dynamic_programming:
+    theta: 0.0001 # convergence threshold
+    n_model_samples: 5 # samples per (s,a) to build model
